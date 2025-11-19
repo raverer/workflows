@@ -1,10 +1,10 @@
 fastapi
-uvicorn[standard]
-sqlalchemy
+uvicorn
+SQLAlchemy
 pydantic
-python-dotenv
-passlib[bcrypt]
 python-jose
+passlib[bcrypt]
+argon2-cffi
 pytrends
 requests
-argon2-cffi
+python-dotenv
