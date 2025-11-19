@@ -7,3 +7,4 @@ passlib[bcrypt]
 python-jose
 pytrends
 requests
+argon2-cffi
