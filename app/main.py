@@ -12,3 +12,9 @@ app.include_router(collector_router, prefix="/api/collect", tags=["Collector"])
 @app.get("/")
 def root():
     return {"message": "API running on Render!"}
+
+# ---- CREATE TABLES AUTOMATICALLY ----
+@app.on_event("startup")
+def on_startup():
+    print("Creating database tables...")
+Base.metadata.create_all(bind=engine)
