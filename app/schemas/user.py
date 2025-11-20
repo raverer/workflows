@@ -10,6 +10,9 @@ class UserResponse(BaseModel):
     email: EmailStr
     name: str
 
+    class LoginSchema(BaseModel):
+    email: EmailStr
+    password: str
     class Config:
         from_attributes = True
 
