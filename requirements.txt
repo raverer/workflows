@@ -1,12 +1,13 @@
 fastapi
 uvicorn[standard]
 SQLAlchemy
-python-jose[cryptography]
+pydantic[email]
+python-jose
 passlib[bcrypt]
 argon2-cffi
 pytrends
+email-validator
 requests
 python-dotenv
 beautifulsoup4
 lxml
-email-validator
