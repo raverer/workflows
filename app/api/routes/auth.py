@@ -1,28 +1,29 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.db.models.user import User
-from app.schemas.user import UserCreate, UserResponse, TokenSchema
 from app.core.security import (
     hash_password,
     verify_password,
     create_access_token,
-    get_current_user,
+    get_current_user
 )
+from app.schemas.user import UserCreate, UserResponse, TokenSchema
 
 router = APIRouter()
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-# ---------------------------------------------------------
-# SIGN UP
-# ---------------------------------------------------------
+# -------------------------
+# SIGNUP
+# -------------------------
 @router.post("/signup", response_model=UserResponse)
 def signup(payload: UserCreate, db: Session = Depends(get_db)):
     existing = db.query(User).filter(User.email == payload.email).first()
     if existing:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="Email already exists")
 
     user = User(
         email=payload.email,
@@ -32,16 +33,17 @@ def signup(payload: UserCreate, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
+
     return user
 
 
-# ---------------------------------------------------------
-# LOGIN (OAuth2 Compatible)
-# ---------------------------------------------------------
+# -------------------------
+# LOGIN
+# -------------------------
 @router.post("/login", response_model=TokenSchema)
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     user = db.query(User).filter(User.email == form_data.username).first()
 
@@ -49,13 +51,12 @@ def login(
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     token = create_access_token({"sub": str(user.id)})
-
     return {"access_token": token, "token_type": "bearer"}
 
 
-# ---------------------------------------------------------
-# PROFILE
-# ---------------------------------------------------------
+# -------------------------
+# CURRENT USER
+# -------------------------
 @router.get("/me", response_model=UserResponse)
-def read_me(current_user: User = Depends(get_current_user)):
+def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
