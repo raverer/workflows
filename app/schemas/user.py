@@ -10,7 +10,7 @@ class UserResponse(BaseModel):
     email: EmailStr
     name: str
 
-    class LoginSchema(BaseModel):
+class LoginSchema(BaseModel):
     email: EmailStr
     password: str
     class Config:
