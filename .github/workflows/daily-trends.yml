@@ -2,15 +2,18 @@ name: Daily Trend Collection
 
 on:
   schedule:
-    - cron: "0 3 * * *"       # Runs at 3 AM UTC daily
-  workflow_dispatch:          # Allows manual run from GitHub UI
+    - cron: "0 3 * * *"   # Runs daily at 3 AM UTC
+  workflow_dispatch:      # Allow manual trigger from UI
 
 jobs:
   collect_trends:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Call Google Trends Collector
-      run: |
-        curl -X POST "${{ secrets.TRENDS_URL }}" \
-        -H "Content-Type: application/json"
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Call Google Trends Collector
+        run: |
+          curl -X POST "${{ secrets.TRENDS_URL }}" \
+          -H "Content-Type: application/json"
