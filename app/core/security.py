@@ -21,17 +21,17 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 # PASSWORD UTILS
 # ----------------------------------------------------------------------
 from passlib.context import CryptContext
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def hash_password(password: str) -> str:
-    # bcrypt cannot accept more than 72 bytes => truncate to safe length
-    safe_password = password.encode("utf-8")[:72].decode("utf-8", errors="ignore")
-    return pwd_context.hash(safe_password)
+pwd_context = CryptContext(
+    schemes=["argon2"],
+    deprecated="auto"
+)
 
+def hash_password(password: str):
+    return pwd_context.hash(password)
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    safe_password = plain_password.encode("utf-8")[:72].decode("utf-8", errors="ignore")
-    return pwd_context.verify(safe_password, hashed_password)
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
 
 
 
