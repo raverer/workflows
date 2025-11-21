@@ -5,7 +5,8 @@ pydantic[email]
 email-validator
 python-multipart
 bcrypt
-passlib[bcrypt]
+argon2-cffi
+passlib
 python-jose
 python-dotenv
 requests
