@@ -1,21 +1,22 @@
 from fastapi import FastAPI
-from app.api.routes.auth import router as auth_router
+from fastapi.middleware.cors import CORSMiddleware
+
 from app.api.routes.trends import router as trends_router
-from app.api.routes.trend_collector import router as collector_router
 
-from app.db.session import engine
-from app.db.base_class import Base   # ✅ THIS IS THE FIX
+app = FastAPI(title="Trend Collection System")
 
-app = FastAPI()
+# Allow frontend or testing tools
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Create tables
-Base.metadata.create_all(bind=engine)   # ✅ NOW Base exists
-
-# Routers
-app.include_router(auth_router, prefix="/auth", tags=["Auth"])
-app.include_router(trends_router, prefix="/api", tags=["Trends"])
-app.include_router(collector_router, prefix="/api/collect", tags=["Collector"])
+# Register routers
+app.include_router(trends_router, prefix="/api")
 
 @app.get("/")
 def root():
-    return {"message": "API running on Render!"}
+    return {"message": "API is running"}
