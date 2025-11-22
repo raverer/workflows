@@ -1,23 +1,18 @@
-# app/services/trend_collector/google_trends.py
-
 from pytrends.request import TrendReq
 
 def fetch_google_trends():
-    pytrend = TrendReq(hl="en-US", tz=330)
+    pytrends = TrendReq(hl='en-US', tz=330)
 
-    pytrend.build_payload(kw_list=["ai", "technology", "news"], timeframe="now 1-d")
-    data = pytrend.interest_over_time()
+    # Fetch "Trending Searches" for India
+    trending_df = pytrends.trending_searches(pn='india')
 
-    if data.empty:
-        return []
-
-    trends = []
-    for keyword in data.columns[:-1]:  # skip 'isPartial'
-        value = int(data[keyword].iloc[-1])
-        trends.append({
+    results = []
+    for keyword in trending_df[0].tolist():
+        results.append({
             "metric": "google_trends",
             "key": keyword,
-            "value": value,
+            "value": 100,          # Google does not give a score, you can keep 100
             "meta": {"source": "google"}
         })
-    return trends
+
+    return results
