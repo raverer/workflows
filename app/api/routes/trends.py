@@ -13,56 +13,22 @@ router = APIRouter()
 # -------------------------------
 @router.post("/youtube")
 def collect_youtube_trends(db: Session = Depends(get_db)):
-    trends = fetch_youtube_trends()
-
+    from app.services.trend_collector.youtube_trends import fetch_youtube_trends
+    trends = fetch_youtube_trends(max_results=20)
     for t in trends:
         record = Trend(
             date=date.today(),
             metric=t["metric"],
-            key=t["key"],
-            value=t["value"],
+            key=t["video_id"],
+            value=t["view_count"],
             meta=t["meta"]
         )
         db.add(record)
-
     db.commit()
     return {"inserted": len(trends)}
 
+@router.get("/youtube", response_model=List[TrendResponse]) 
+def get_youtube_trends(db: Session = Depends(get_db)):
+    rows = db.query(Trend).filter(Trend.metric == "youtube_trends").order_by(Trend.value.desc()).limit(50).all()
+    return rows
 
-# -------------------------------
-# Read Trends (for frontend users)
-# -------------------------------
-@router.get("/")
-def get_trends(metric: str = "youtube_trends", db: Session = Depends(get_db)):
-    rows = db.query(Trend).filter(Trend.metric == metric).all()
-
-    return [
-        {
-            "id": r.id,
-            "metric": r.metric,
-            "date": r.date,
-            "key": r.key,
-            "value": r.value,
-            "meta": r.meta
-        }
-        for r in rows
-    ]
-
-
-# -------------------------------
-# Debug Route
-# -------------------------------
-@router.get("/debug")
-def debug(db: Session = Depends(get_db)):
-    rows = db.query(Trend).limit(20).all()
-    return [
-        {
-            "id": r.id,
-            "metric": r.metric,
-            "date": str(r.date),
-            "key": r.key,
-            "value": r.value,
-            "meta": r.meta
-        }
-        for r in rows
-    ]
