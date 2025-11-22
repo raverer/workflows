@@ -1,5 +1,5 @@
-from sqlalchemy import Column, Integer, String, Date, Float, JSON
-from app.db.base_class import Base
+from sqlalchemy import Column, Integer, String, Date, JSON
+from app.db.base import Base
 
 class Trend(Base):
     __tablename__ = "trends"
@@ -8,5 +8,5 @@ class Trend(Base):
     date = Column(Date, index=True)
     metric = Column(String, index=True)
     key = Column(String, index=True)
-    value = Column(Float)
+    value = Column(Integer)
     meta = Column(JSON)
