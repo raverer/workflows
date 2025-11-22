@@ -1,33 +1,41 @@
 # app/services/trend_collector/youtube_trends.py
 
 import os
-from googleapiclient.discovery import build  # make sure google-api-python-client is in requirements
+from googleapiclient.discovery import build  # Requires: google-api-python-client
 
+# Environment variables (set these in Render Dashboard → Environment)
 API_KEY = os.getenv("YOUTUBE_API_KEY")
-REGION_CODE = os.getenv("YOUTUBE_REGION", "IN")  # default India
+REGION_CODE = os.getenv("YOUTUBE_REGION", "IN")  # Default region: India
 
 
 def fetch_youtube_trends(max_results: int = 20):
     """
-    Fetch top 'most popular' YouTube videos for a region.
-    - No thumbnails returned (per your request).
-    - We return a normalized list of dicts that the Trend model can store.
-    """
-    if not API_KEY:
-        # This will surface as a 500 in the FastAPI route – that’s fine, it’s a clear error.
-        raise RuntimeError("YOUTUBE_API_KEY environment variable is not set")
+    Fetch trending (most popular) YouTube videos for a region.
 
+    - Uses YouTube Data API v3 (free tier).
+    - Returns normalized dicts ready for insertion into the `Trend` table.
+    - No thumbnails (as requested).
+    """
+
+    if not API_KEY:
+        raise RuntimeError(
+            "YOUTUBE_API_KEY is missing. Set it in your Render environment."
+        )
+
+    # Build the YouTube API client
     youtube = build("youtube", "v3", developerKey=API_KEY)
 
+    # Fetch trending videos
     request = youtube.videos().list(
         part="snippet,statistics",
         chart="mostPopular",
         regionCode=REGION_CODE,
         maxResults=max_results,
     )
-    response = request.execute()
 
+    response = request.execute()
     items = response.get("items", [])
+
     trends = []
 
     for item in items:
@@ -35,21 +43,21 @@ def fetch_youtube_trends(max_results: int = 20):
         snippet = item.get("snippet", {}) or {}
         stats = item.get("statistics", {}) or {}
 
-        title = snippet.get("title", "")
-        channel_title = snippet.get("channelTitle", "")
-        publish_at = snippet.get("publishedAt")  # ISO string
+        title = snippet.get("title")
+        channel_title = snippet.get("channelTitle")
+        publish_time = snippet.get("publishedAt")  # ISO timestamp
         view_count = int(stats.get("viewCount", 0))
 
         trends.append(
             {
-                "metric": "youtube_trends",
-                "key": vid,          # goes into Trend.key
-                "value": view_count, # goes into Trend.value
-                "meta": {
+                "metric": "youtube_trends",   # will go into Trend.metric
+                "key": vid,                   # Trend.key
+                "value": view_count,          # Trend.value
+                "meta": {                     # Trend.meta
                     "source": "youtube",
                     "title": title,
                     "channel_title": channel_title,
-                    "published_at": publish_at,
+                    "published_at": publish_time,
                 },
             }
         )
