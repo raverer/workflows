@@ -1,49 +1,60 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from datetime import date
-from typing import List
+
 from app.db.session import get_db
 from app.db.models.trend import Trend
-from app.schemas.trend import TrendSchema
+from app.services.trend_collector.youtube_trends import fetch_youtube_trends
 
 router = APIRouter()
 
-# ---------------------
-# GET /api/trends
-# ---------------------
-@router.get("/trends")
-def get_trends(
-    db: Session = Depends(get_db),
-    date_: date = Query(None, alias="date"),
-    metric: str = Query("google_trends")
-):
-    q = db.query(Trend).filter(Trend.metric == metric)
+# -------------------------------
+# Collect YouTube Trends
+# -------------------------------
+@router.post("/youtube")
+def collect_youtube_trends(db: Session = Depends(get_db)):
+    trends = fetch_youtube_trends()
 
-    if date_:
-        q = q.filter(Trend.date == date_)
+    for t in trends:
+        record = Trend(
+            date=date.today(),
+            metric=t["metric"],
+            key=t["key"],
+            value=t["value"],
+            meta=t["meta"]
+        )
+        db.add(record)
 
-    q = q.order_by(Trend.value.desc())
-    rows = q.all()
-
-    if not rows:
-        return {"message": "No trends found"}
-
-    return {
-        "date": str(rows[0].date),
-        "source": rows[0].metric.replace("_trends", ""),
-        "trends": [
-            {"topic": r.key, "score": r.value}
-            for r in rows
-        ]
-    }
+    db.commit()
+    return {"inserted": len(trends)}
 
 
-# ---------------------
-# DEBUG: GET /api/trends/debug
-# ---------------------
-@router.get("/trends/debug")
+# -------------------------------
+# Read Trends (for frontend users)
+# -------------------------------
+@router.get("/")
+def get_trends(metric: str = "youtube_trends", db: Session = Depends(get_db)):
+    rows = db.query(Trend).filter(Trend.metric == metric).all()
+
+    return [
+        {
+            "id": r.id,
+            "metric": r.metric,
+            "date": r.date,
+            "key": r.key,
+            "value": r.value,
+            "meta": r.meta
+        }
+        for r in rows
+    ]
+
+
+# -------------------------------
+# Debug Route
+# -------------------------------
+@router.get("/debug")
 def debug(db: Session = Depends(get_db)):
-    rows = db.query(Trend).order_by(Trend.id.desc()).limit(20).all()
+    rows = db.query(Trend).limit(20).all()
     return [
         {
             "id": r.id,
@@ -55,27 +66,3 @@ def debug(db: Session = Depends(get_db)):
         }
         for r in rows
     ]
-
-
-# ---------------------
-# POST /api/trends/google
-# ---------------------
-@router.post("/trends/google")
-def collect_google_trends(db: Session = Depends(get_db)):
-    from app.services.trend_collector.google_trends import fetch_google_trends
-
-    trends = fetch_google_trends()
-    today = date.today()
-
-    for t in trends:
-        record = Trend(
-            date=today,
-            metric=t["metric"],
-            key=t["key"],
-            value=t["value"],
-            meta=t["meta"],
-        )
-        db.add(record)
-
-    db.commit()
-    return {"inserted": len(trends)}
