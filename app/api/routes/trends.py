@@ -11,19 +11,31 @@ router = APIRouter()
 # ---------------------
 # GET /api/trends
 # ---------------------
-@router.get("/trends", response_model=List[TrendSchema])
+@router.get("/trends")
 def get_trends(
     db: Session = Depends(get_db),
     date_: date = Query(None, alias="date"),
-    metric: str = Query("top_tags")
+    metric: str = Query("google_trends")
 ):
     q = db.query(Trend).filter(Trend.metric == metric)
 
     if date_:
         q = q.filter(Trend.date == date_)
 
-    q = q.order_by(Trend.value.desc()).limit(50)
-    return q.all()
+    q = q.order_by(Trend.value.desc())
+    rows = q.all()
+
+    if not rows:
+        return {"message": "No trends found"}
+
+    return {
+        "date": str(rows[0].date),
+        "source": rows[0].metric.replace("_trends", ""),
+        "trends": [
+            {"topic": r.key, "score": r.value}
+            for r in rows
+        ]
+    }
 
 
 # ---------------------
