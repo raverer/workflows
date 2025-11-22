@@ -1,32 +1,28 @@
-import requests
-from bs4 import BeautifulSoup
+import os
+from googleapiclient.discovery import build  # You’ll install `google-api-python-client`
+from datetime import date
 
-def fetch_youtube_trends():
-    url = "https://www.youtube.com/feed/trending"
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
+API_KEY = os.getenv("YOUTUBE_API_KEY")
+REGION_CODE = os.getenv("YOUTUBE_REGION", "IN")
 
-    response = requests.get(url, headers=headers)
-
-    if response.status_code != 200:
-        raise Exception("Failed to fetch YouTube trends")
-
-    soup = BeautifulSoup(response.text, "lxml")
-
-    # Extract trending video titles
-    titles = [tag.text.strip() for tag in soup.select("#video-title")]
-
-    # Keep top 10 only
-    top_items = titles[:10]
-
+def fetch_youtube_trends(max_results: int = 10):
+    youtube = build('youtube', 'v3', developerKey=API_KEY)
+    request = youtube.videos().list(
+        part="snippet,statistics",
+        chart="mostPopular",
+        regionCode=REGION_CODE,
+        maxResults=max_results
+    )
+    response = request.execute()
     trends = []
-    for t in top_items:
+    for item in response.get("items", []):
         trends.append({
+            "video_id": item["id"],
+            "title": item["snippet"]["title"],
+            # thumbnail excluded on purpose:
+            "view_count": int(item["statistics"].get("viewCount", 0)),
+            "publish_date": item["snippet"]["publishedAt"],
             "metric": "youtube_trends",
-            "key": t,
-            "value": 1,              # no numeric score available
             "meta": {"source": "youtube"}
         })
-
     return trends
