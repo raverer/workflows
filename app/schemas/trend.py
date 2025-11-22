@@ -1,14 +1,14 @@
 from pydantic import BaseModel
 from datetime import date
-from typing import Optional, Any
+from typing import Optional, Dict, Any
 
-class TrendSchema(BaseModel):
+class TrendResponse(BaseModel):
     id: int
-    date: date
     metric: str
+    date: date
     key: str
     value: int
-    meta: Optional[Any]
+    meta: Dict[str, Any]
 
     class Config:
         from_attributes = True
