@@ -1,14 +1,14 @@
 from pydantic import BaseModel
 from datetime import date
-from typing import Optional, Dict, Any
+from typing import Any, Dict
 
 class TrendResponse(BaseModel):
     id: int
     metric: str
     date: date
-    key: str
-    value: int
+    key: str     # here video_id
+    value: int   # view_count
     meta: Dict[str, Any]
 
     class Config:
-        from_attributes = True
+        orm_mode = True
