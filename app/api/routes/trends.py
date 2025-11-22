@@ -14,7 +14,9 @@ from app.services.trend_collector.youtube_trends import fetch_youtube_trends
 router = APIRouter()
 
 
-# 1) Main listing endpoint: /api/trends
+# --------------------------------------------
+# 1) GET /api/trends  → view trends
+# --------------------------------------------
 @router.get("/trends", response_model=List[TrendResponse])
 def get_trends(
     db: Session = Depends(get_db),
@@ -22,22 +24,25 @@ def get_trends(
     date_: Optional[date] = Query(None, alias="date", description="Filter by date YYYY-MM-DD"),
 ):
     """
-    Return latest trends for a metric.
-    Default metric is 'youtube_trends'.
+    Return the latest stored trends (defaults to YouTube trending videos).
     """
+
     q = db.query(Trend).filter(Trend.metric == metric)
+
     if date_:
         q = q.filter(Trend.date == date_)
+
     q = q.order_by(Trend.value.desc()).limit(50)
     return q.all()
 
 
-# 2) Debug endpoint: /api/trends/debug
+# --------------------------------------------
+# 2) GET /api/trends/debug → inspect raw DB data
+# --------------------------------------------
 @router.get("/trends/debug")
 def debug_trends(db: Session = Depends(get_db)):
     """
-    Raw view of the last 20 rows from trends table.
-    Useful to confirm that cron / GitHub Action has inserted data.
+    Show last 20 rows from DB — useful to verify GitHub cron inserts are working.
     """
     rows = db.query(Trend).order_by(Trend.id.desc()).limit(20).all()
     return [
@@ -53,12 +58,15 @@ def debug_trends(db: Session = Depends(get_db)):
     ]
 
 
-# 3) Collector endpoint: /api/trends/youtube
+# --------------------------------------------
+# 3) POST /api/trends/youtube  → collect & insert live trends
+# --------------------------------------------
 @router.post("/trends/youtube")
 def collect_youtube_trends(db: Session = Depends(get_db)):
     """
-    Call YouTube API, normalize results, and store into 'trends' table.
+    Call YouTube API → normalize → save into DB.
     """
+
     trends = fetch_youtube_trends()
 
     if not trends:
@@ -68,12 +76,13 @@ def collect_youtube_trends(db: Session = Depends(get_db)):
     inserted = 0
 
     for t in trends:
+        # FIXED mapping according to your youtube_trends.py structure
         record = Trend(
             date=today,
-            metric=t["metric"],
-            key=t["key"],
-            value=t["value"],
-            meta=t.get("meta"),
+            metric="youtube_trends",
+            key=t["video_id"],          # correct field name
+            value=t["view_count"],      # correct field name
+            meta=t.get("meta", {}),
         )
         db.add(record)
         inserted += 1
