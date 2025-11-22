@@ -14,9 +14,9 @@ app = FastAPI(
 
 # Routers
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
-app.include_router(trends_router, prefix="/api", tags=["Trends"])
+app.include_router(trends_router, prefix="/api/trends", tags=["Trends"])
 
 
 @app.get("/")
-def root():
-    return {"message": "Trend Collection API is running!"}
+def home():
+    return {"message": "Trend API is running"}
