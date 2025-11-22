@@ -10,8 +10,10 @@ router = APIRouter()
 @router.get("/trends", response_model=List[dict])
 def get_trends(db: Session = Depends(get_db),
                date_: date = Query(None, alias="date"),
-               metric: str = Query("top_tags")):
-    q = db.query(Trend).filter(Trend.metric == metric)
+               metric: str | None = Query(None)
+    if metric:
+        q = q.filter(Trend.metric == metric)
+
     if date_:
         q = q.filter(Trend.date == date_)
     q = q.order_by(Trend.value.desc()).limit(50)
