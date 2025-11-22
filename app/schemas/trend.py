@@ -1,14 +1,20 @@
-from pydantic import BaseModel
-from datetime import date
-from typing import Any, Dict
+# app/schemas/trend.py
 
-class TrendResponse(BaseModel):
-    id: int
+from datetime import date
+from typing import Any, Dict, Optional
+from pydantic import BaseModel
+
+
+class TrendBase(BaseModel):
     metric: str
     date: date
-    key: str     # here video_id
-    value: int   # view_count
-    meta: Dict[str, Any]
+    key: str
+    value: int
+    meta: Optional[Dict[str, Any]] = None
+
+
+class TrendResponse(TrendBase):
+    id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # for SQLAlchemy ORM models
