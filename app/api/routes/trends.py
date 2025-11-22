@@ -61,31 +61,22 @@ def debug_trends(db: Session = Depends(get_db)):
 # --------------------------------------------
 # 3) POST /api/trends/youtube  → collect & insert live trends
 # --------------------------------------------
-@router.post("/trends/youtube")
+@router.post("/youtube")
 def collect_youtube_trends(db: Session = Depends(get_db)):
-    """
-    Call YouTube API → normalize → save into DB.
-    """
-
     trends = fetch_youtube_trends()
 
     if not trends:
         return {"inserted": 0}
 
-    today = date.today()
-    inserted = 0
-
     for t in trends:
-        # FIXED mapping according to your youtube_trends.py structure
         record = Trend(
-            date=today,
-            metric="youtube_trends",
-            key=t["video_id"],          # correct field name
-            value=t["view_count"],      # correct field name
-            meta=t.get("meta", {}),
+            date=date.today(),
+            metric=t["metric"],   # "youtube_trends"
+            key=t["key"],         # VIDEO ID
+            value=t["value"],     # VIEW COUNT
+            meta=t["meta"]        # title, channel, publish date
         )
         db.add(record)
-        inserted += 1
 
     db.commit()
-    return {"inserted": inserted}
+    return {"inserted": len(trends)}
