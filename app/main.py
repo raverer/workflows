@@ -20,3 +20,16 @@ app.include_router(trends_router, prefix="/api")
 @app.get("/")
 def root():
     return {"message": "API is running"}
+
+# 👉 CREATE MISSING TABLES ON STARTUP
+@app.on_event("startup")
+def create_tables():
+    Base.metadata.create_all(bind=engine)
+
+# ROUTES
+app.include_router(auth_router, prefix="/auth", tags=["Auth"])
+app.include_router(trends_router, prefix="/api", tags=["Trends"])
+
+@app.get("/")
+def root():
+    return {"message": "Trend Collector Running!"}
