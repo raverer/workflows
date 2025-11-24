@@ -1,4 +1,4 @@
-name: Daily Trend Collection
+name: Daily YouTube Trend Collection
 
 on:
   schedule:
@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Call YouTube Trends Collector
+    - name: Send request to YouTube API collector
       run: |
-        curl -X POST "${{ secrets.TRENDS_URL }}/api/trends/youtube"
+        curl -X POST "https://workflows-1.onrender.com/api/trends/youtube" \
+        -H "Content-Type: application/json"
