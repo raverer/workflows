@@ -238,13 +238,3 @@ Dashboards
 Daily emailed insights
 
 "Trending topics intelligence" SaaS
-
-📩 Contact
-
-If you'd like to discuss backend freelancing, AI tools, or collaborations:
-
-Rajib Rawal
-AI Developer • Automation Engineer
-📧 your-email
-🔗 LinkedIn: your-link
-🧑‍💻 GitHub: your-profile
